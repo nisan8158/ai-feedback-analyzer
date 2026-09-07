@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Feedback</title>
+</head>
+
+<body>
+
+    <h1>Share Your Feedback</h1>
+
+    <p>Tell us about your experience.</p>
+
+    <textarea
+        id="feedbackInput"
+        rows="6"
+        cols="50"
+        placeholder="Enter your feedback..."
+    ></textarea>
+
+    <br><br>
+
+    <button onclick="submitFeedback()">Submit Feedback</button>
+
+    <p id="message"></p>
+
+
+    <script>
+        async function submitFeedback() {
+
+            const text = document.getElementById("feedbackInput").value;
+
+            if (text.trim() === "") {
+                document.getElementById("message").innerText =
+                    "Please enter your feedback.";
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    "http://127.0.0.1:8000/feedback",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            text: text
+                        })
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error("Something went wrong.");
+                }
+
+                document.getElementById("message").innerText =
+                    "Thank you! Your feedback has been submitted.";
+
+                document.getElementById("feedbackInput").value = "";
+
+            } catch (error) {
+
+                document.getElementById("message").innerText =
+                    "Could not submit feedback. Please try again.";
+            }
+        }
+    </script>
+
+</body>
+</html>

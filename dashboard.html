@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: #f4f6f8;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: 36px;
+        }
+
+        .header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+
+        .card h3 {
+            margin: 0 0 14px;
+            font-size: 16px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 34px;
+            font-weight: 700;
+        }
+
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+
+        .chart-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+
+        .chart-container {
+            height: 320px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+
+        .section h2 {
+            margin-top: 0;
+            margin-bottom: 18px;
+        }
+
+        .feedback-item {
+            padding: 18px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .feedback-item:last-child {
+            border-bottom: none;
+        }
+
+        .feedback-text {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .feedback-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .category {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .confidence {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        @media (max-width: 800px) {
+            .cards,
+            .charts {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>AI Feedback Dashboard</h1>
+        <p>Monitor customer sentiment, feedback categories and recent responses.</p>
+    </div>
+
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total Feedback</h3>
+            <p id="totalFeedback">-</p>
+        </div>
+
+        <div class="card">
+            <h3>Positive</h3>
+            <p id="positiveFeedback">-</p>
+        </div>
+
+        <div class="card">
+            <h3>Negative</h3>
+            <p id="negativeFeedback">-</p>
+        </div>
+
+    </div>
+
+    <div class="charts">
+
+        <div class="chart-card">
+            <h2>Sentiment Analysis</h2>
+            <div class="chart-container">
+                <canvas id="sentimentChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h2>Category Distribution</h2>
+            <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="section">
+        <h2>Recent Feedback</h2>
+        <div id="recentFeedback"></div>
+    </div>
+
+</div>
+
+<script>
+
+function formatCategory(category) {
+    return category
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+
+async function loadDashboard() {
+
+    try {
+
+        const statsResponse = await fetch(
+            "http://127.0.0.1:8000/stats"
+        );
+
+        const statsData = await statsResponse.json();
+
+        const positive = statsData.sentiments.positive || 0;
+        const negative = statsData.sentiments.negative || 0;
+
+        document.getElementById("totalFeedback").innerText =
+            statsData.total_feedback;
+
+        document.getElementById("positiveFeedback").innerText =
+            positive;
+
+        document.getElementById("negativeFeedback").innerText =
+            negative;
+
+
+        new Chart(
+            document.getElementById("sentimentChart"),
+            {
+                type: "doughnut",
+
+                data: {
+                    labels: ["Positive", "Negative"],
+                    datasets: [{
+                        data: [positive, negative]
+                    }]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "bottom"
+                        }
+                    }
+                }
+            }
+        );
+
+
+        const categoryNames =
+            Object.keys(statsData.categories).map(formatCategory);
+
+        const categoryValues =
+            Object.values(statsData.categories);
+
+
+        new Chart(
+            document.getElementById("categoryChart"),
+            {
+                type: "bar",
+
+                data: {
+                    labels: categoryNames,
+
+                    datasets: [{
+                        label: "Feedback",
+                        data: categoryValues
+                    }]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+
+        const feedbackResponse = await fetch(
+            "http://127.0.0.1:8000/feedback"
+        );
+
+        const feedbackData =
+            await feedbackResponse.json();
+
+        const recentFeedbackDiv =
+            document.getElementById("recentFeedback");
+
+        recentFeedbackDiv.innerHTML = "";
+
+
+        feedbackData.forEach(feedback => {
+
+            const item = document.createElement("div");
+            item.className = "feedback-item";
+
+            const text = document.createElement("div");
+            text.className = "feedback-text";
+            text.innerText = '"' + feedback.text + '"';
+
+            const meta = document.createElement("div");
+            meta.className = "feedback-meta";
+
+            const sentimentBadge = document.createElement("span");
+            sentimentBadge.className =
+                "badge " + feedback.sentiment.toLowerCase();
+
+            sentimentBadge.innerText =
+                feedback.sentiment.toUpperCase();
+
+            const categoryBadge = document.createElement("span");
+            categoryBadge.className = "badge category";
+            categoryBadge.innerText =
+                formatCategory(feedback.category);
+
+            const confidence = document.createElement("span");
+            confidence.className = "confidence";
+
+            confidence.innerText =
+                "Confidence: "
+                + (feedback.confidence * 100).toFixed(2)
+                + "%";
+
+            meta.appendChild(sentimentBadge);
+            meta.appendChild(categoryBadge);
+            meta.appendChild(confidence);
+
+            item.appendChild(text);
+            item.appendChild(meta);
+
+            recentFeedbackDiv.appendChild(item);
+        });
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.body.innerHTML +=
+            "<p>Could not load dashboard data.</p>";
+    }
+}
+
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>
