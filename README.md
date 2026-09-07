@@ -62,6 +62,26 @@ Feedback is automatically classified into categories such as:
 - Product
 - Other
 
+## Screenshots
+
+### Feedback Submission
+
+Users can submit feedback through a clean and simple interface. The feedback is automatically analyzed using an AI-powered sentiment analysis model.
+
+![Feedback Submission](screenshots/feedback-page.png)
+
+### Analytics Dashboard
+
+The dashboard provides an overview of customer sentiment and feedback category distribution.
+
+![Analytics Dashboard](screenshots/dashboard-overview.png)
+
+### Recent Feedback
+
+Recent feedback entries are displayed together with their predicted sentiment, category, and confidence score.
+
+![Recent Feedback](screenshots/dashboard-feedback.png)
+
 ## Project Structure
 
 ```text
